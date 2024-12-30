@@ -1,76 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, FlatList, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation hook
-import api from '../api/api';
+// src/screens/AdminScreen.js
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 
-const AdminScreen = () => {
-  const [foodItems, setFoodItems] = useState([]);
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const navigation = useNavigation(); // Initialize the navigation object
-
-  useEffect(() => {
-    const fetchFoodItems = async () => {
-      try {
-        const response = await api.get('/food');
-        setFoodItems(response.data);
-      } catch (error) {
-        console.error('Error fetching food items:', error);
-      }
-    };
-
-    fetchFoodItems();
-  }, []);
-
-  const addFoodItem = async () => {
-    try {
-      const response = await api.post('/food', { name, price });
-      setFoodItems([...foodItems, response.data]);
-      setName('');
-      setPrice('');
-
-      Alert.alert('Success', 'Food item added successfully!');
-    } catch (error) {
-      console.error('Error adding food item:', error);
-      Alert.alert('Error', `Failed to add food item. Error: ${error.response?.data?.message || error.message}`);
-    }
-  };
-
-  const navigateToSlotOrders = () => {
-    navigation.navigate('Slots'); // Navigate to SlotsScreen
-  };
-
-  const renderFoodItem = ({ item }) => (
-    <View style={styles.foodItem}>
-      <Text>{item.name}</Text>
-      <Text>{item.price}</Text>
-    </View>
-  );
+const AdminScreen = ({ route }) => {
+  const { orderId, slotId, items } = route.params || {}; // Get the order details from route params
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Food Name"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Price"
-        value={price}
-        onChangeText={setPrice}
-      />
-      <Button title="Add Food Item" onPress={addFoodItem} />
-      
-      {/* Navigation Button */}
-      <Button title="Go to Slot Orders" onPress={navigateToSlotOrders} />
+      <Text style={styles.title}>New Order Received</Text>
+      <Text style={styles.text}>Order ID: {orderId}</Text>
+      <Text style={styles.text}>Slot ID: {slotId}</Text>
 
-      {/* <FlatList
-        data={foodItems}
-        keyExtractor={(item) => item._id}
-        renderItem={renderFoodItem}
-      /> */}
+      <Text style={styles.itemsTitle}>Items in the order:</Text>
+      <ScrollView>
+        {items && items.map((item) => (
+          <View key={item.id} style={styles.itemContainer}>
+            <Text style={styles.itemText}>{item.title} x{item.quantity}</Text>
+            <Text style={styles.priceText}>Price: ${item.price}</Text>
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 };
@@ -78,20 +27,39 @@ const AdminScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#f5f5f5',
+    padding: 20,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
-  input: {
-    height: 40,
-    borderColor: 'gray',
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  text: {
+    fontSize: 18,
+    marginVertical: 5,
+  },
+  itemsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginVertical: 10,
+  },
+  itemContainer: {
+    marginBottom: 20,
+    padding: 10,
     borderWidth: 1,
-    marginBottom: 12,
-    padding: 8,
+    borderRadius: 8,
+    width: '100%',
+    backgroundColor: '#f9f9f9',
   },
-  foodItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+  itemText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  priceText: {
+    fontSize: 16,
+    color: 'green',
   },
 });
 

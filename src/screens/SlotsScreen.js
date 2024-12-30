@@ -1,60 +1,41 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../api/api';
+// src/screens/SlotsScreen.js
+import React, { useState } from 'react';
+import { View, Text, Button, FlatList, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const SlotsScreen = ({ navigation }) => {
-  const [slots, setSlots] = useState([]);
-  const [role, setRole] = useState(null);
+const SlotsScreen = () => {
+  const navigation = useNavigation();
 
-  useEffect(() => {
-    const fetchSlots = async () => {
-      try {
-        const response = await api.get('/slots'); // Assuming you have a backend route to fetch slots
-        console.log(response.data); // Check if data is received properly
-        setSlots(response.data);
-      } catch (error) {
-        console.error(error);
-        Alert.alert('Error', 'Unable to fetch slots');
-      }
-    };
+  // Example: List of slots (this could come from your API or state)
+  const [slots, setSlots] = useState([
+    { id: 'slot1', name: 'Slot 1' },
+    { id: 'slot2', name: 'Slot 2' },
+    { id: 'slot3', name: 'Slot 3' },
+  ]);
 
-    const fetchRole = async () => {
-      try {
-        const token = await AsyncStorage.getItem('token');
-        const { role } = JSON.parse(atob(token.split('.')[1])); // Decode JWT payload to get the role
-        setRole(role);
-      } catch (error) {
-        console.error(error);
-        Alert.alert('Error', 'Unable to fetch role');
-      }
-    };
-
-    fetchSlots();
-    fetchRole();
-  }, []);
-
-  const handleSlotPress = (slot) => {
-    if (role === 'admin') {
-      navigation.navigate('SlotOrders', { slotId: slot._id }); // Admin page for managing orders
-    } else {
-      navigation.navigate('SlotCategoryScreen', { slotId: slot._id }); // User page for slot categories
-    }
+  // Function to navigate to the SlotCategoryScreen with the selected slotId
+  const handleSlotSelection = (slotId) => {
+    navigation.navigate('SlotCategoryScreen', { slotId }); // Pass slotId to SlotCategoryScreen
   };
+
+  const renderSlotItem = ({ item }) => (
+    <View style={styles.slotItem}>
+      <Text>{item.name}</Text>
+      <Button
+        title={`Select ${item.name}`}
+        onPress={() => handleSlotSelection(item.id)} // Passing the slotId
+      />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      {/* <Text style={styles.title}>Available Slots</Text> */}
-      {slots.map((slot) => (
-        <TouchableOpacity
-          key={slot._id}
-          style={styles.slotButton}
-          onPress={() => handleSlotPress(slot)}
-        >
-          <Text style={styles.title}>{slot.title}</Text>
-          <Text style={styles.slotText}>{slot.time}</Text>
-        </TouchableOpacity>
-      ))}
+      <Text style={styles.title}>Available Slots</Text>
+      <FlatList
+        data={slots}
+        keyExtractor={(item) => item.id}
+        renderItem={renderSlotItem}
+      />
     </View>
   );
 };
@@ -62,34 +43,27 @@ const SlotsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 16,
+    backgroundColor: '#f5f5f5',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
-    // paddingBottom: 20,
+    marginBottom: 16,
   },
-  slotButton: {
-    padding: 16,backgroundColor: '#FF7043', // A nice, vibrant orange
-
-    borderRadius: 8,
-    marginVertical: 8,
-    // height: 80,  // Temporarily set a fixed height to ensure text fits
-    width: '80%',
+  slotItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    // justifyContent: 'center', // Ensure text is centered
-    // flexDirection: 'row', // Optional, if you want to control alignment more
-    elevation: 5, // Adding shadow for better visibility on Android
-  },
-  slotText: {
-    color: '#fff', // Ensure text is white
-    fontSize: 18,
-    // textAlign: 'center', // Ensures the text is aligned properly within the button
+    marginBottom: 12,
+    padding: 10,
+    backgroundColor: '#ffffff',
+    borderRadius: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
   },
 });
-
 
 export default SlotsScreen;

@@ -1,76 +1,134 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { useCart } from '../context/CartContext';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const SlotCategoryScreen = () => {
-  const meals = [
-    { id: '1', title: 'Paneer Rice', price: '₹120', image: 'https://greenbowl2soul.com/wp-content/uploads/2022/09/Paneer-fried-rice.jpg' },
-    { id: '2', title: 'Curry', price: '₹50', image: 'https://www.acouplecooks.com/wp-content/uploads/2020/02/Vegetable-Curry-001.jpg' },
-    { id: '3', title: 'Dal', price: '₹60', image: 'https://via.placeholder.com/150' },
-    { id: '4', title: 'Veg Biryani', price: '₹150', image: 'https://via.placeholder.com/150' },
-    { id: '5', title: 'Rice Dal Curry', price: '₹140', image: 'https://via.placeholder.com/150' },
-    { id: '6', title: 'Vegetable Stew', price: '₹110', image: 'https://via.placeholder.com/150' },
-  ];
+  const { addToCart, decreaseQuantity, cart } = useCart();
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { slotId } = route.params; // Slot ID passed from previous screen
 
-  const fastFood = [
-    { id: '1', title: 'Veg Burger', price: '₹80', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQKTe2tepSNc7wRWNe6tzHSObX-gTW_n8bSRg&s' },
-    { id: '2', title: 'Veg Pizza', price: '₹200', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQlsp6Lb7ezlJQi8h79toD70SH2VlpoBud7ow&s' },
-    { id: '3', title: 'Fries', price: '₹70', image: 'https://via.placeholder.com/150' },
-    { id: '4', title: 'Veg Hotdog', price: '₹90', image: 'https://via.placeholder.com/150' },
-    { id: '5', title: 'Taco', price: '₹100', image: 'https://via.placeholder.com/150' },
-    { id: '6', title: 'Sandwich', price: '₹120', image: 'https://via.placeholder.com/150' },
-  ];
+  const [selectedStall, setSelectedStall] = useState(null);
 
-  const juices = [
-    { id: '1', title: 'Orange Juice', price: '₹50', image: 'https://as2.ftcdn.net/v2/jpg/05/83/02/45/1000_F_583024506_sM7z7MbwZm4p7hXgZet3rxFRbtmdNb2d.jpg' },
-    { id: '2', title: 'Apple Juice', price: '₹60', image: 'https://r2.starryai.com/results/985911252/e22699c3-952a-4537-a82d-dc90002b0e4d.webp' },
-    { id: '3', title: 'Mango Juice', price: '₹70', image: 'https://via.placeholder.com/150' },
-    { id: '4', title: 'Pineapple Juice', price: '₹80', image: 'https://via.placeholder.com/150' },
-    { id: '5', title: 'Grape Juice', price: '₹60', image: 'https://via.placeholder.com/150' },
-    { id: '6', title: 'Watermelon Juice', price: '₹40', image: 'https://via.placeholder.com/150' },
-  ];
+  const stalls = {
+    meals: [
+      { id: '1', title: 'Paneer Rice', price: 120, description: 'A delicious meal of spiced rice and paneer.', image: 'https://greenbowl2soul.com/wp-content/uploads/2022/09/Paneer-fried-rice.jpg', stallId: 'meals' },
+      { id: '2', title: 'Curry', price: 50, description: 'Rich and flavorful vegetable curry.', image: 'https://via.placeholder.com/150', stallId: 'meals' },
+    ],
+    juices: [
+      { id: '3', title: 'Mango Juice', price: 50, description: 'Refreshing mango juice.', image: 'https://via.placeholder.com/150', stallId: 'juices' },
+      { id: '4', title: 'Orange Juice', price: 60, description: 'Freshly squeezed orange juice.', image: 'https://via.placeholder.com/150', stallId: 'juices' },
+    ],
+    chatBhandar: [
+      { id: '5', title: 'French Fries', price: 80, description: 'Crispy and golden fries.', image: 'https://via.placeholder.com/150', stallId: 'chatBhandar' },
+      { id: '6', title: 'Spring Rolls', price: 90, description: 'Crispy rolls filled with vegetables.', image: 'https://via.placeholder.com/150', stallId: 'chatBhandar' },
+    ],
+  };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.card}>
-      <Image source={{ uri: item.image }} style={styles.cardImage} />
-      <Text style={styles.cardTitle}>{item.title}</Text>
-      <Text style={styles.cardPrice}>{item.price}</Text>
-    </TouchableOpacity>
-  );
+  const renderItem = ({ item }) => {
+    // Ensure that cart[item.stallId] is an array and find the correct item in the cart
+    const cartItemsForStall = Array.isArray(cart[item.stallId]) ? cart[item.stallId] : [];
+    const cartItem = cartItemsForStall.find((cartItem) => cartItem.id === item.id);
+    const quantity = cartItem ? cartItem.quantity : 0;
+
+    return (
+      <View style={styles.card}>
+        <Image source={{ uri: item.image }} style={styles.cardImage} />
+        <View style={styles.cardInfo}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          <Text style={styles.cardDescription}>{item.description}</Text>
+          <Text style={styles.cardPrice}>₹{item.price}</Text>
+
+          <View style={styles.quantityContainer}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => decreaseQuantity(item.id, item.stallId)} // Pass the stallId
+            >
+              <Text style={styles.buttonText}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.quantityText}>{quantity}</Text>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => addToCart(item)} // Item already has stallId
+            >
+              <Text style={styles.buttonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  const handleStallSelect = (stall) => {
+    setSelectedStall(stall === selectedStall ? null : stall);
+  };
+
+  const proceedToPayment = () => {
+    const itemsByStall = Object.keys(cart).reduce((acc, stallId) => {
+      acc[stallId] = cart[stallId]; // Get items grouped by stallId
+      return acc;
+    }, {});
+
+    navigation.navigate('Payment', { slotId, items: itemsByStall });
+  };
+
+  // Calculate cart count
+  let cartCount = 0;
+  Object.keys(cart).forEach(stallId => {
+    if (Array.isArray(cart[stallId])) {
+      cart[stallId].forEach(item => {
+        cartCount += item.quantity;
+      });
+    }
+  });
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Meals</Text>
-      <FlatList
-        data={meals}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        horizontal
-        key="meals" // Unique key for this FlatList
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-      />
+      <Text style={styles.header}>Slot: {slotId}</Text>
 
-      <Text style={styles.header}>Fast Food</Text>
-      <FlatList
-        data={fastFood}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        horizontal
-        key="fastfood" // Unique key for this FlatList
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-      />
+      {selectedStall === null && (
+        <View style={styles.stallSelector}>
+          {Object.keys(stalls).map((stall) => (
+            <TouchableOpacity
+              key={stall}
+              style={[styles.stallButton, selectedStall === stall && styles.selectedStall]}
+              onPress={() => handleStallSelect(stall)}
+            >
+              <Text style={styles.stallButtonText}>{stall.charAt(0).toUpperCase() + stall.slice(1)}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
-      <Text style={styles.header}>Juices</Text>
-      <FlatList
-        data={juices}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        horizontal
-        key="juices" // Unique key for this FlatList
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-      />
+      {selectedStall && (
+        <FlatList
+          data={stalls[selectedStall]}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContainer}
+        />
+      )}
+
+      {selectedStall && (
+        <TouchableOpacity
+          style={styles.switchStallButton}
+          onPress={() => setSelectedStall(null)}
+        >
+          <Text style={styles.switchStallButtonText}>Switch Stall</Text>
+        </TouchableOpacity>
+      )}
+
+      <View style={styles.cartSummary}>
+        <Text style={styles.cartCount}>Items in Cart: {cartCount}</Text>
+        <TouchableOpacity
+          style={styles.cartButton}
+          onPress={proceedToPayment}
+        >
+          <Text style={styles.cartButtonText}>Proceed to Payment</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -79,45 +137,105 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    backgroundColor: '#fff',
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 8,
-    marginTop: 16,
+    marginBottom: 20,
   },
-  listContainer: {
-    paddingHorizontal: 8,
+  stallSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  stallButton: {
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    borderRadius: 8,
+  },
+  selectedStall: {
+    backgroundColor: '#4CAF50',
+  },
+  stallButtonText: {
+    fontSize: 16,
+    color: '#000',
   },
   card: {
-    width: 120,
-    marginHorizontal: 8,
-    padding: 16,
-    backgroundColor: '#FFD700',
+    flexDirection: 'row',
+    marginBottom: 20,
+    backgroundColor: '#f9f9f9',
     borderRadius: 8,
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    padding: 10,
   },
   cardImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 8,
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  cardInfo: {
+    flex: 1,
   },
   cardTitle: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 4,
-    textAlign: 'center',
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#666',
   },
   cardPrice: {
-    fontSize: 12,
-    color: '#555',
-    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  button: {
+    backgroundColor: '#f0f0f0',
+    padding: 10,
+    borderRadius: 8,
+    marginHorizontal: 5,
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  quantityText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  switchStallButton: {
+    marginTop: 20,
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  switchStallButtonText: {
+    fontSize: 16,
+    color: '#fff',
+  },
+  cartSummary: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  cartCount: {
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  cartButton: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 8,
+  },
+  cartButtonText: {
+    fontSize: 16,
+    color: '#fff',
   },
 });
 

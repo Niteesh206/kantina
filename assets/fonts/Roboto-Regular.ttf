@@ -1,0 +1,72 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, StatusBar } from 'react-native';
+import * as Splash from 'expo-splash-screen';  // Import SplashScreen
+import * as Font from 'expo-font'; // Expo font library
+import { useNavigation } from '@react-navigation/native';
+import * as Animatable from 'react-native-animatable';
+
+// Prevent the splash screen from hiding automatically
+Splash.preventAutoHideAsync();
+
+const SplashScreenComponent = () => {
+  const [isReady, setIsReady] = useState(false);
+  const navigation = useNavigation();
+
+  // Load resources like fonts, assets, etc.
+  const loadResourcesAsync = async () => {
+    await Font.loadAsync({
+      'Roboto': require('../../assets/fonts/Roboto-Regular.ttf'), // Path to your font file
+      // You can add more fonts if needed
+    });
+  };
+
+  useEffect(() => {
+    const prepare = async () => {
+      await loadResourcesAsync();
+      setIsReady(true);
+      setTimeout(() => {
+        Splash.hideAsync(); // Hide splash screen after resources are loaded
+      }, 3000); // Adjust the time as necessary
+    };
+
+    prepare();
+  }, []);
+
+  // Wait for resources to be ready
+  if (!isReady) {
+    return null; // Show splash screen until resources are loaded
+  }
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <Animatable.Text
+        style={styles.appName}
+        animation="fadeIn"
+        iterationCount={1}
+        duration={2000}
+        onAnimationEnd={() => navigation.navigate('Home')} // Navigate after animation
+      >
+        KANTINA
+      </Animatable.Text>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  appName: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#4CAF50', // Customize the color
+    textAlign: 'center',
+    fontFamily: 'Roboto', // Use the custom font
+  },
+});
+
+export default SplashScreenComponent;
